@@ -1,0 +1,159 @@
+---
+title: "Class 11: Structural Bioinformatics"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Working with the online Protein Data Bank (PDB)
+
+We moved the csv files from PDB to our document to allow analysis of protein structure. 
+After downloading the data export summary, we are going to look at the composition of this database. 
+
+```{r}
+stats <- read.csv("Data Export Summary.csv", row.names = 1)
+stats
+```
+
+Percentage of structures solved by x-ray and EM.
+```{r}
+pre.by.method <- stats$Total/sum(stats$Total) * 100
+names(pre.by.method) <- rownames(stats)
+pre.by.method
+```
+
+What portion of the structures are proteins?
+```{r}
+round(sum(stats$Proteins)/sum(stats$Total) * 100, 2)
+```
+
+How do we bring in data from a file that is NOT .csv? We need a specific package. It's called "r datapasta". Then we can use the "Addins" tab and use the "paste as" function.
+
+```{r}
+tmp <- data.frame(stringsAsFactors=FALSE,
+   Experimental.Method = c("X-Ray", "NMR", "Electron Microscopy", "Other",
+                           "Multi Method", "Total"),
+              Proteins = c(124770, 10988, 2057, 250, 127, 138192),
+         Nucleic.Acids = c(1993, 1273, 31, 4, 5, 3306),
+    ProteinNA.Complex = c(6451, 257, 723, 6, 2, 7439),
+                 Other = c(10, 8, 0, 13, 1, 32),
+                 Total = c(133224, 12526, 2811, 273, 135, 148969)
+)
+View(tmp)
+```
+
+##Using VMD
+We're going to be looking at the structure of 1HSG (HIV-1 Protease)
+(All in class notes).
+In this case- we searched 1HSG and opened the .pdb file in VMD, which allowed us to visualize the molecular structure. 
+
+##Getting Started with the Bio3D Package
+
+Make sure we have the package open in this session (since it is already downloaded).
+```{r}
+library(bio3d)
+```
+
+Open the 1HSG protein information that we have. 
+```{r}
+pdb <- read.pdb("1hsg")
+pdb
+```
+
+*GO BACK AND DO LATER*
+Let's install a new package (this one is not quite up to date yet). Allows us to use programs that are from papers- latest, and is very helpful. 
+
+The 'devtools' package allows us to install development versions
+  install.packages("devtools")
+Install the bio3d.view package from bitbucket
+  devtools::install_bitbucket("Grantlab/bio3d-view")
+
+```{r}
+library("bio3d.view")
+view(pdb, "overview", col="sse")
+```
+
+We want to extract the protein only portion of this PDB structure and write it to a new PDB file. 
+
+Extract the ligand (in this instance , the drug) alone. 
+
+##Atom Selection in Bio3D
+
+We'll be using the atom.select() function. This function operates on PDB structure objects (as created by read.pdb()) and returns the numeric indices of a selected atom subset. These indices can then be used to access the $atom and $xyz attributes of PDB structure related objects.
+
+For example to select the indices for all C-alpha atoms we can use the following command:
+(Any protein, ligand, or other protein factor can be used in place of "calpha")
+```{r}
+ca.inds <- atom.select(pdb, "calpha")
+ca.inds
+```
+
+Let's print the details from the first few selected atoms. 
+```{r}
+head( pdb$atom[ca.inds$atom, ] )
+```
+Printing the selected x,y,z coordinates
+```{r}
+head( pdb$xyz[, ca.inds$xyz] )
+```
+
+Quick example of calling the ligand. 
+```{r}
+lig.inds <- atom.select(pdb, "ligand")
+lig.inds
+```
+
+```{r}
+lig.inds$atom
+pdb$atom[lig.inds$atom,]
+```
+
+Make a new structure object. 
+```{r}
+ligand.pdb <- trim.pdb(pdb, lig.inds)
+ligand.pdb
+```
+
+```{r}
+view(ligand.pdb)
+```
+
+```{r}
+write.pdb(ligand.pdb, file = "ligand.pdb")
+```
+
+We skipped to the ligands, but let's do the same thing with the protein (that we called the alpha carbons for).
+```{r}
+ca.pdb <- trim.pdb(pdb, ca.inds)
+ca.pdb
+
+write.pdb(ca.pdb, file = "ca.pdb")
+```
+
+Now let's write this out for the entire protein. 
+*Add this in later*
+(instead of = ligand, use = protein)
+
+##Visualizing a Dynamic Enzyme
+```{r}
+library(bio3d)
+```
+
+
+Now we're going to look at movement in an enzyme (this one is the egg white enzyme).
+```{r}
+pdb2 <- read.pdb("1HEL")
+
+#Normal Mode Analysis
+modes <- nma(pdb2)
+plot(modes)
+```
+
+```{r}
+m7 <- mktrj(modes, mode=7, file = "mode_7.pdb")
+view(m7, col=vec2color( rmsf(m7) ))
+```
+
+We used the Bio3D package, and it is important to remember this package is still being updated.
