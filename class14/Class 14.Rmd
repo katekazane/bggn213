@@ -1,0 +1,253 @@
+---
+title: "Class 14: Transcriptomics and RNAseq Data Analysis"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Data input
+
+The first thing we need to do is bring in the counts and metadata that we are going to analyze. A nice touch is arguing with the "stringsAsFactors" command.
+```{r}
+counts <- read.csv("data/airway_scaledcounts.csv", stringsAsFactors = FALSE)
+metadata <- read.csv("data/airway_metadata.csv", stringsAsFactors = FALSE)
+```
+
+```{r}
+head(counts)
+```
+
+How many genes do we have?(Count rows)
+```{r}
+nrow(counts)
+```
+How many experiments?
+```{r}
+ncol(counts)
+```
+This count includes the column of gene names, so we need to keep that in mind. 
+
+Let's check that the metadata corresponds to the counts. We want to compare the column names from counts (except the first one) to the metadata id. We use a comparison == to see if the two sides are equal. The "all()" command will check that every one of the comparisons are true. 
+```{r}
+all( metadata$id == colnames(counts)[-1] )
+
+```
+
+First, let's seperate out the controls from the treated experimental groups. 
+Look through the metadata file for the "dex" column (since treatment is with dex). Aka the columns of our **counts** object based on the **metadata**
+
+First we call all the control data (remembering to add the columns back).
+```{r}
+#Find the column name of the control experiments
+control.ids <- metadata$id[metadata[,"dex"] == "control"]
+control.ids
+#Now we use the ids to extract those columns
+control <- counts[,control.ids]
+rownames(control) <- counts$ensgene
+head( control )
+```
+
+Repeating this, we should be able to extract the treated samples. 
+```{r}
+treated.ids <- metadata$id[metadata[,"dex"] == "treated"]
+treated.ids
+treated <- counts[,treated.ids]
+rownames(treated) <- counts$ensgene
+head( treated )
+```
+
+We have all the numbers extracted, but now we want the average across each gene (averages of the rows).
+Finding the mean counts value for each gene in control experiments. 
+
+```{r}
+control.mean <- rowSums(control)/ncol(control)
+head(control.mean)
+```
+
+```{r}
+treated.mean <- rowSums(treated)/ncol(treated)
+head(treated.mean)
+```
+
+Now that we have this information (the means) we can put them into a data frame (reunited!)
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+```
+
+Checking our results. 
+```{r}
+colSums(meancounts)
+```
+
+Let's take a look.
+```{r}
+plot(meancounts$control.mean, meancounts$treated.mean)
+```
+
+ There is so much data, we want to show it as a log scale. 
+```{r}
+plot(meancounts$control.mean, meancounts$treated.mean, log = "xy")
+```
+
+With this number of data points, log is important, but log2 (fold change) is an even better way to handle data of this size. 
+```{r}
+#we are adding a new column to a previously existing data set. The log2 fold change to the mean counts
+meancounts$log2fc <- log2(meancounts[,"treated.mean"]/meancounts[,"control.mean"])
+head(meancounts)
+
+```
+It is really important that we address the "NaN" and "-Inf" values. We need to filter out the genes that are at zero. 
+
+```{r}
+#meancounts[,1:2]
+
+toy <- c(1,2,0,4,0)
+toy == 0
+which(toy == 0)
+
+newtoy <- cbind(toy,toy)
+newtoy
+
+newtoy == 0
+#arr.ind lists the row and column of the answer, 
+which(newtoy==0, arr.ind = TRUE)
+
+#We use unique to prevent counting twice. Helps keeps our list from being redundant.
+unique(which(newtoy==0, arr.ind = TRUE)[,1])
+
+
+```
+
+Applying this theory to mean counts. 
+```{r}
+zero.vals <- which(meancounts[,1:2]==0, arr.ind=TRUE)
+head(zero.vals)
+
+to.rm <- unique(zero.vals[,1])
+#After we isolate the zero values, we use the (-) to remove them from our existing dataset. 
+mycounts <- meancounts[-to.rm,]
+head(mycounts)
+```
+
+We've taken care of the zeros, now we want to set a limit based on significance (thresholds).
+A common threshold used for calling something differentially expressed is a log2(FoldChange) of **greater than 2 or less than -2**. Let’s filter the dataset both ways to see how many genes are up or down-regulated.
+
+```{r}
+up.ind <- mycounts$log2fc > 2
+down.ind <- mycounts$log2fc < (-2)
+```
+
+How many are above?
+```{r}
+sum(up.ind)
+```
+
+How many are down?
+```{r}
+sum(down.ind)
+```
+
+```{r}
+head(mycounts[up.ind,])
+```
+
+We want to put context to this information. It would be nice to look at more than just a string of numbers. 
+We're going to merge annotation that is already available. 
+
+##Adding Annotation Data from Ensemble Annotation File
+
+```{r}
+anno <- read.csv("data/annotables_grch38.csv")
+head(anno)
+```
+
+```{r}
+dim(anno)
+```
+
+**Merge** will bring together data frames that share file names. Since we don't have the exact same columns as the online information, we have to make adjustments. 
+
+Let's try the **merge()** function to add the annotation data to our **mycounts** results.
+```{r}
+mycounts.anno <- merge(x=mycounts, y=anno, by.x="row.names", by.y = "ensgene")
+#by.x and by.y specifies how we want both frames to be merged by. 
+head(mycounts.anno)
+```
+
+We'll be using Bioconductor's annotation packages. 
+Bioconductor’s annotation packages help with mapping various ID schemes to each other. Here we load the AnnotationDbi package and the annotation package org.Hs.eg.db.  They needed biocLite() to be installed. 
+
+```{r}
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+```
+
+```{r}
+columns(org.Hs.eg.db)
+```
+
+```{r}
+mycounts$symbol <- mapIds(org.Hs.eg.db,
+                     keys=row.names(mycounts),
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+```
+```{r}
+head(mycounts)
+```
+
+#DESeq2 Analysis
+```{r}
+library(DESeq2)
+```
+
+Build our DESeqDataSet
+```{r}
+dds <- DESeqDataSetFromMatrix(countData=counts, 
+                              colData=metadata, 
+                              design=~dex, 
+                              tidy=TRUE)
+dds
+```
+
+```{r}
+dds <- DESeq(dds)
+```
+
+Getting our results. 
+```{r}
+res <- results(dds)
+res
+```
+
+Then we can also print a summary that should provide more data. 
+```{r}
+summary(res, alpha=0.01)
+#arguing alpha adjusts the p-value
+```
+
+
+**Volcano Plots**
+This allows us to show significance AND fold changes.
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj))
+#Here we chose a different p adjusted value. 
+```
+
+We're going to add some color to the plot
+```{r}
+mycols <- rep("gray", nrow(res))
+mycols[abs(res$log2FoldChange) > 2] = "red"
+subset.ind <- res$padj < 0.01 & abs(res$log2FoldChange) > 2
+mycols[subset.ind] <- "blue"
+
+plot(res$log2FoldChange, -log(res$padj), col=mycols)
+```
+
+Different arguments can allow us to divide our data into smaller regions and allow them to be more easily read. 
+
+"Enhanced Volcano" is another good resource for cleaning up volcano plots. 
