@@ -118,11 +118,31 @@ add(c(1,2,3,4), 4)
 
     ## [1] 5 6 7 8
 
-``` r
-#add(1, 2, 2)
-```
+If you type {r eval=FALSE} then the program will skip over a chunk of code (important if you're knitting a document). In the following case, we're showing code that will break the function add() so we can either set eval=FALSE or turn the code into a comment.
 
 ``` r
+#Need to make 1,2,2 a vector since our function can only add two numbers. The sum function already exists.
+#add(1, 2, 2)
+
+add(1, y=2)
+```
+
+    ## [1] 3
+
+``` r
+sum(1,2,2)
+```
+
+    ## [1] 5
+
+``` r
+add(c(1,2,2))
+```
+
+    ## [1] 2 3 3
+
+``` r
+#Can't add a numeric and a string. 
 #add(x=1, y="b")
 ```
 
@@ -201,7 +221,7 @@ rescale3(1:10, plot = TRUE)
     ## [1] "Hello"
     ## [1] "is it me you are looking for?"
 
-![](class06_files/figure-markdown_github/unnamed-chunk-22-1.png)
+![](class06_files/figure-markdown_github/unnamed-chunk-23-1.png)
 
     ## [1] "I can see it in ..."
 
@@ -277,19 +297,19 @@ s3.b <- s3.chainA$atom$b
 plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
 ```
 
-![](class06_files/figure-markdown_github/unnamed-chunk-26-1.png)
+![](class06_files/figure-markdown_github/unnamed-chunk-27-1.png)
 
 ``` r
 plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
 ```
 
-![](class06_files/figure-markdown_github/unnamed-chunk-26-2.png)
+![](class06_files/figure-markdown_github/unnamed-chunk-27-2.png)
 
 ``` r
 plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
 ```
 
-![](class06_files/figure-markdown_github/unnamed-chunk-26-3.png)
+![](class06_files/figure-markdown_github/unnamed-chunk-27-3.png)
 
 Making the Biopackage Example into a Function
 ---------------------------------------------
@@ -303,7 +323,7 @@ s1 <- read.pdb("4AKE") # kinase with drug
     ##   Note: Accessing on-line PDB file
 
     ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): /var/folders/
-    ## nb/q6y90gbd6v5d2m95gwwxgx0hnfwvs4/T//RtmpCwcsjL/4AKE.pdb exists. Skipping
+    ## nb/q6y90gbd6v5d2m95gwwxgx0hnfwvs4/T//RtmpPG8DVA/4AKE.pdb exists. Skipping
     ## download
 
 ``` r
@@ -313,7 +333,7 @@ s2 <- read.pdb("1AKE") # kinase no drug
     ##   Note: Accessing on-line PDB file
 
     ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): /var/folders/
-    ## nb/q6y90gbd6v5d2m95gwwxgx0hnfwvs4/T//RtmpCwcsjL/1AKE.pdb exists. Skipping
+    ## nb/q6y90gbd6v5d2m95gwwxgx0hnfwvs4/T//RtmpPG8DVA/1AKE.pdb exists. Skipping
     ## download
 
     ##    PDB has ALT records, taking A only, rm.alt=TRUE
@@ -325,7 +345,7 @@ s3 <- read.pdb("1E4Y") # kinase with drug
     ##   Note: Accessing on-line PDB file
 
     ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): /var/folders/
-    ## nb/q6y90gbd6v5d2m95gwwxgx0hnfwvs4/T//RtmpCwcsjL/1E4Y.pdb exists. Skipping
+    ## nb/q6y90gbd6v5d2m95gwwxgx0hnfwvs4/T//RtmpPG8DVA/1E4Y.pdb exists. Skipping
     ## download
 
 ``` r
@@ -340,16 +360,16 @@ s3.b <- s3.chainA$atom$b
 plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
 ```
 
-![](class06_files/figure-markdown_github/unnamed-chunk-27-1.png)
+![](class06_files/figure-markdown_github/unnamed-chunk-28-1.png)
 
 ``` r
 plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
 ```
 
-![](class06_files/figure-markdown_github/unnamed-chunk-27-2.png)
+![](class06_files/figure-markdown_github/unnamed-chunk-28-2.png)
 
 ``` r
 plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
 ```
 
-![](class06_files/figure-markdown_github/unnamed-chunk-27-3.png)
+![](class06_files/figure-markdown_github/unnamed-chunk-28-3.png)

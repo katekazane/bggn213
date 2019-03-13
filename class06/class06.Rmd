@@ -71,11 +71,20 @@ add( c(1,2,3,4))
 add(c(1,2,3,4), 4)
 ```
 
+If you type {r eval=FALSE} then the program will skip over a chunk of code (important if you're knitting a document). In the following case, we're showing code that will break the function add() so we can either set eval=FALSE or turn the code into a comment. 
 ```{r}
+#Need to make 1,2,2 a vector since our function can only add two numbers. The sum function already exists.
 #add(1, 2, 2)
+
+add(1, y=2)
+sum(1,2,2)
+```
+```{r}
+add(c(1,2,2))
 ```
 
 ```{r}
+#Can't add a numeric and a string. 
 #add(x=1, y="b")
 ```
 
