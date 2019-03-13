@@ -1,0 +1,226 @@
+---
+title: "Class 15: Pathway Analysis from RNAseq Results"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Differential Expression Analysis
+
+To look at this pathway, we always want to start with our raw data. Additionally, we want to use the DESeq2 function.
+
+```{r message=FALSE}
+library(DESeq2)
+```
+
+Now we need to import our *counts* and our *metadata*.
+```{r}
+#Assigned names to each link to make life easier. 
+metaFile <- "data/GSE37704_metadata.csv"
+countFile <- "data/GSE37704_featurecounts.csv"
+
+colData <- read.csv(metaFile, row.names = 1)
+head(colData)
+```
+
+```{r}
+countData <- read.csv(countFile, row.names = 1)
+head(countData)
+```
+
+```{r}
+nrow(countData)
+dim(countData)
+```
+
+We want to clean up our data, and get rid of that length column. 
+```{r}
+#rewriting a previous function is dangerous (since iterations can keep applying the same). Can assure this stays correct by running all the previous chunks.
+countData <- countData[,-1]
+head(countData)
+```
+
+We want to be able that the columns match the metadata. 
+```{r}
+all( rownames(colData) == colnames(countData))
+```
+
+Now we want to get rid of the zero values. 
+```{r filter_filter_zero_count_genes}
+inds <- rowSums(countData) != 0
+#we can use == 0 but then we would need to use countData[-inds,]
+countData <- countData[inds,]
+head(countData)
+
+```
+
+After we remove the zeros, how many genes do we have left?
+```{r}
+nrow(countData)
+#we can insert this code into our document automatically by using `r nrow(countData)` in the middle of a text string. This is used below. 
+```
+
+We now have `r nrow(countData)` genes remaining in our data set. 
+
+##Running DESeq1
+
+```{r message=FALSE}
+dds <- DESeqDataSetFromMatrix(countData=countData,
+                             colData=colData,
+                             design=~condition)
+dds <- DESeq(dds)
+```
+
+```{r}
+res <- results(dds)
+head(res)
+```
+
+##Volcano Plot
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj) )
+```
+
+Improvements! Meaning let's add some colors. 
+```{r}
+mycols <- rep("gray", nrow(res))
+#we're going to overwrite the gray to draw attention to certain points. 
+mycols[ abs(res$log2FoldChange) > 2 ] <- "red"
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2)
+mycols[ inds ] <- "blue"
+
+#now here is the final plot after we adjusted "mycols"
+plot(res$log2FoldChange, -log(res$padj), col = mycols )
+```
+
+```{r}
+head(res)
+```
+
+##Adding Gene Annotation
+
+We want to make the Ensemble ID's into meaningful information. 
+```{r}
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+
+columns(org.Hs.eg.db)
+
+res$symbol = mapIds(org.Hs.eg.db,
+                    keys=row.names(res), 
+                    keytype="ENSEMBL",
+                    column= "SYMBOL",
+                    multiVals="first")
+
+res$entrez = mapIds(org.Hs.eg.db,
+                    keys=row.names(res),
+                    keytype="ENSEMBL",
+                    column="ENTREZID",
+                    multiVals="first")
+
+res$name =   mapIds(org.Hs.eg.db,
+                    keys=row.names(res),
+                    keytype="ENSEMBL",
+                    column="GENENAME",
+                    multiVals="first")
+head(res, 10)
+```
+
+```{r save_results}
+res <- res[order(res$pvalue),]
+write.csv(res, file = "deseq_results.csv")
+```
+
+
+#Section 2: Pathway Analysis 
+
+Here we are going to use the gage package for pathway analysis. Once we have a list of enriched pathways, we’re going to use the pathview package to draw pathway diagrams, shading the molecules in the pathway by their degree of up/down-regulation.
+```{r eval= FALSE}
+source("http://bioconductor.org/biocLite.R")
+biocLite( c("pathview", "gage", "gageData") )
+```
+
+
+```{r message=FALSE}
+library(pathview)
+library(gage)
+library(gageData)
+```
+
+```{r}
+data(kegg.sets.hs)
+data(sigmet.idx.hs)
+
+# Focus on signaling and metabolic pathways only
+kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
+
+# Examine the first 3 pathways
+head(kegg.sets.hs, 3)
+```
+
+Once we have the pathways, we want to look at the overlap. For this we'll want to run the Gage pathway analysis. Below is our setup for **gage()**. 
+```{r}
+foldchanges = res$log2FoldChange
+names(foldchanges) = res$entrez
+head(foldchanges)
+```
+
+Here is the actual analysis. 
+```{r}
+keggres = gage(foldchanges, gsets=kegg.sets.hs)
+
+attributes(keggres)
+
+```
+
+```{r}
+head(keggres$less)
+```
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id="hsa04110")
+```
+
+![](hsa04110.pathview.png)
+
+We can also make xml and pdf versions of these plots. 
+
+For a pdf: 
+```{r}
+# adding kegg.native=FALSE
+pathview(gene.data=foldchanges, pathway.id="hsa04110", kegg.native=FALSE)
+```
+
+We want to be able to look at a group of pathways- but this time let's just pull out the top 5!
+```{r}
+#The [] allows us to pull certain pathways. 
+keggrespathways <- rownames(keggres$greater)[1:5]
+
+# We can also limit the length of the strings. 
+keggresids <- substr(keggrespathways, start=1, stop=8)
+keggresids
+```
+
+Now we can draw all of these pathways. 
+```{r}
+pathview(gene.data=foldchanges, pathway.id=keggresids, species="hsa")
+```
+
+##Reactome
+There are even more ways to analyze results (including websites).
+
+```{r}
+sig_genes <- res[res$padj <= 0.05 & !is.na(res$padj), "symbol"]
+print(paste("Total number of significant genes:", length(sig_genes)))
+```
+
+```{r}
+write.table(sig_genes, file="significant_genes.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)
+```
+
+
+
+
