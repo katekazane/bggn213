@@ -1,0 +1,74 @@
+---
+title: "Class 18: Immunoinformatics and Cancer"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Cancer Genomics
+
+In order to compare our mutant and wildtype sequences we need to build an alignment. First we want to bring in our Fasta files. The best way to do this is with the read.fasta command. 
+```{r}
+library(bio3d)
+seq1 <- read.fasta("lecture18_sequences.fa")
+seq1
+```
+
+In this case our sequences are imported, but that won't always be the case. 
+```{r}
+align <- seqaln(seq1)
+align
+```
+
+We're now going to look for mutated regions (unaligned). We won't be taking regions with gaps into account (in fact they will be actively excluded from our analysis). 
+
+First- look at positional identity scores. Matches are 1's (TRUE = 1) and mismatches are 0 (FALSE = 0). The conserv() function from bio3d allows us to do this very simply. 
+```{r}
+ident <- conserv(seq1$ali, method="identity")
+mutants <- which(ident < 1)
+
+#now that we have those calculations, we'll be excluding gaps. This is especially important since we have the different lengths of our sequences. 
+
+gaps <- gap.inspect(seq1)
+mutants <- mutants[mutants %in% gaps$f.inds]
+
+mutants
+```
+
+We now have the sites of mutants, but we're more interested in what these actually are. We'll make a name for each mutant. 
+
+```{r}
+mutant.names <- paste0(seq1$ali["P53_wt",mutants],
+                       mutants,
+                       seq1$ali["P53_mutant",mutants])
+mutant.names
+```
+
+
+Now that we have the individual mutant sites, we want to get the sequences surrounding those sites. *We use 9-mers since those are the right length to get a single unique sequence in the genome* To get the full sequence we're interested in, we start 8 residues upstream of the target and end 8 residues downstream. 
+```{r}
+start.position <- mutants - 8
+end.position <-  mutants + 8
+```
+
+We store these sequences in a blank matrix
+```{r}
+store.seqs <- matrix("-", nrow=length(mutants), ncol=17)
+rownames(store.seqs) <- mutant.names
+```
+
+And now we'll extract each subsequence! 
+```{r}
+for(i in 1:length(mutants)) {
+  store.seqs[i,] <- seq1$ali["P53_mutant",start.position[i]:end.position[i]]
+}
+
+store.seqs
+```
+
+Now we have a sequence for each identity. We can export this as a fasta file, and analyze it on a binding protein prediction website. HLA
+*in this example we're looking for HLA binding sites, and therefore we'll use the IEDB HLA binding prediction website* 
+{r} [IEDB HLA binding predictions](http://tools.iedb.org/mhci/)
+
