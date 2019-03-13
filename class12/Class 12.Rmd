@@ -1,0 +1,90 @@
+---
+title: "Class 12: Structural Bioinformatics and Drug Discovery"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Cleaning up the Protein Target Structure
+
+Start by downloading the target (the protein receptor) from the main PDB database. This time we'll be using the PDB ID "1hsg" the HIV protease. 
+
+Here we're writing a code that will allow us to switch out the protein (why we have the pdb.code defined).
+
+```{r}
+library(bio3d)
+
+pdb.code <- "1hsg"
+file.name <- get.pdb(pdb.code)
+```
+
+This file is very large, so we want to extract the protein only segments. We'll then change it to a new PDB format file. We'll also be doing this for the bound ligand (will allow us to manipulate both).
+
+```{r}
+hiv <- read.pdb(file.name)
+hiv
+```
+
+Initially, we'll want just the protein. When you run it, check the non protein values (should be zero).
+```{r}
+prot <- trim.pdb(hiv, "protein")
+prot
+```
+
+We give the file a generic name to avoid hardocding 1hsg (keeps our code versatile).
+```{r}
+prot.filename <- paste(pdb.code, "_protein.pdb", sep = "")
+write.pdb(prot, file = prot.filename)
+```
+
+Doing the same for the ligand.
+```{r}
+lig <- trim.pdb(hiv, "ligand")
+lig
+```
+```{r}
+lig.filename <- paste(pdb.code, "_ligand.pdb", sep = "")
+write.pdb(lig, file = lig.filename)
+```
+
+##Using The AutoDock Tools Package
+
+Once we open the 1hsg_protein.pdb file, we add back the hydrogens and save the file as a .pdbqt
+Opening it we can see more of the electrostatic charges. Adding the hydrogens back gives us a lot of room to play around. It also assigns the charges to each molecule. 
+
+We can do the exact same thing for the ligands. 
+
+##Converting Docking Results for Viewing in VMD
+
+```{r}
+res <- read.pdb("all.pdbqt", multi = TRUE)
+res
+```
+
+```{r}
+write.pdb(res, file = "results.pdb")
+```
+
+We can also compare docking results in R using RMSD (Root Mean Square Distance)
+```{r}
+#We already ran the first part of this function.
+#res <- read.pdb("all.pdbqt", multi=TRUE)
+ori <- read.pdb("ligand.pdbqt")
+rmsd(ori, res)
+```
+
+This will compare all of the pairs (14x14 table).
+```{r}
+rmsd(res)
+```
+
+##Ligand Based Approaches- Normal Mode Analysis
+
+
+
+
+
+
+
