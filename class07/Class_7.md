@@ -6,7 +6,7 @@ Katelynn Kazane
 Functions revisited
 -------------------
 
-Load (**source**) the rescale() function from last class.
+Load the rescale() function from *class 6*.
 
 ``` r
 source("http://tinyurl.com/rescale-R")
@@ -24,7 +24,7 @@ rescale(1:5)
 #rescale(c(1:5, "string"))
 ```
 
-We want to make the code more robust to these types of errors.
+We want to make the code more robust to these types of errors- meaning mixing strings and numerics.
 
 ``` r
 #rescale2(c(1:5, "string"))
@@ -179,20 +179,19 @@ both_na(x, y3)
 We can help resolve this error by adding an IF function.
 
 ``` r
-#both_na2(x, y2)
+both_na(x, y2)
 ```
+
+    ## Warning in is.na(x) & is.na(y): longer object length is not a multiple of
+    ## shorter object length
+
+    ## [1] 3
 
 ``` r
 x <- c( 1, 2, NA, 3, NA)
 y <- c(NA, 3, NA, 3, 4)
 
-both_na3(x,y)
+both_na(x,y)
 ```
 
-    ## Found 1 NA's at position(s):3
-
-    ## $number
     ## [1] 1
-    ## 
-    ## $which
-    ## [1] 3
