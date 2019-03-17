@@ -101,7 +101,7 @@ pdb
     ## + attr: atom, xyz, seqres, helix, sheet,
     ##         calpha, remark, call
 
-*GO BACK AND DO LATER* Let's install a new package (this one is not quite up to date yet). Allows us to use programs that are from papers- latest, and is very helpful.
+Let's install a new package (this one is not quite up to date yet). Allows us to use programs that are from papers- latest, and is very helpful.
 
 The 'devtools' package allows us to install development versions install.packages("devtools") Install the bio3d.view package from bitbucket devtools::install\_bitbucket("Grantlab/bio3d-view")
 
@@ -372,8 +372,8 @@ pdb2 <- read.pdb("1HEL")
 modes <- nma(pdb2)
 ```
 
-    ##  Building Hessian...     Done in 0.017 seconds.
-    ##  Diagonalizing Hessian...    Done in 0.082 seconds.
+    ##  Building Hessian...     Done in 0.018 seconds.
+    ##  Diagonalizing Hessian...    Done in 0.084 seconds.
 
 ``` r
 plot(modes)

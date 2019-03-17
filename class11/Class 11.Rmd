@@ -62,7 +62,7 @@ pdb <- read.pdb("1hsg")
 pdb
 ```
 
-*GO BACK AND DO LATER*
+
 Let's install a new package (this one is not quite up to date yet). Allows us to use programs that are from papers- latest, and is very helpful. 
 
 The 'devtools' package allows us to install development versions
