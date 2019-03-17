@@ -4,6 +4,7 @@ Katelynn Kazane
 2/6/2019
 
 k-Means
+-------
 
 Basic formula kmeans (x, centers=, nstart =)
 
@@ -25,16 +26,16 @@ km
     ## 
     ## Cluster means:
     ##           x         y
-    ## 1  2.957894 -3.107113
-    ## 2 -3.107113  2.957894
+    ## 1 -3.022330  2.841713
+    ## 2  2.841713 -3.022330
     ## 
     ## Clustering vector:
-    ##  [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1
-    ## [36] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+    ##  [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2
+    ## [36] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
     ## 
     ## Within cluster sum of squares by cluster:
-    ## [1] 68.97081 68.97081
-    ##  (between_SS / total_SS =  88.9 %)
+    ## [1] 32.78202 32.78202
+    ##  (between_SS / total_SS =  94.0 %)
     ## 
     ## Available components:
     ## 
@@ -56,8 +57,8 @@ Cluster membership
 km$cluster
 ```
 
-    ##  [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1
-    ## [36] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+    ##  [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2
+    ## [36] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 
 Visualization of the categories, and plotting of the center points
 
@@ -121,8 +122,8 @@ table(grp6)
 ```
 
     ## grp6
-    ##  1  2  3  4  5  6  7  8  9 10 
-    ##  8  7  6  8  1  8  8  6  7  1
+    ##  1  2  3  4  5  6 
+    ##  7  9 14  9 14  7
 
 We can also use k = groups as an argument to cutree()
 
@@ -367,7 +368,10 @@ plot(pca$x[,1], pca$x[,2], col=colvec, pch=16,
 
 ![](Class_8_files/figure-markdown_github/unnamed-chunk-21-1.png)
 
-**Using real world examples for this** PCA of UK Food Data
+PCA of UK Food Data
+-------------------
+
+Using real world data as a practice set for making PCA models.
 
 ``` r
 uk <- read.csv("data/UK_foods.csv")
@@ -469,10 +473,10 @@ x3 <- x[,-1]
 head(x3)
 ```
 
-    ## -2.17001947791724 -3.71362540874086 -3.52989113967868 -4.41225280429105 
-    ##          2.727249          3.605244          1.622708          1.781114 
-    ## -3.22201602425528 -3.59772109059362 
-    ##          2.836887          2.815090
+    ## -4.79373874944968 -3.40442907306332 -1.63954341474813 -3.30354533418314 
+    ##          3.218069          2.511058          3.674884          2.446038 
+    ## -3.78112753881557 -3.39793993002708 
+    ##          2.166826          1.782022
 
 ``` r
 barplot(as.matrix(x3), beside=T, col=rainbow(nrow(x)))
