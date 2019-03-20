@@ -6,15 +6,14 @@ Katelynn Kazane
 **PCA and Clustering Project**
 ------------------------------
 
-Get our input data
-------------------
+Starting out, we need to isolate our input data. *note: give the input file a generic name so we can reuse our code for any file*
 
 ``` r
 fna.data <- "WisconsinCancer.csv"
 wisc.df <- read.csv(fna.data)
 ```
 
-Always double check that your data is correct.
+Always double check that your data is correct- head() allows us to look at the first six lines of the file.
 
 ``` r
 head(wisc.df)
@@ -77,7 +76,9 @@ head(wisc.df)
     ## 5                 0.07678 NA
     ## 6                 0.12440 NA
 
-The last row has an undefined value, we also want to exclude diagnosis and patient IDs before we analyze all of this information. We'll only be using columns 3 to the next to last column. Now we're going to look at the number of patients and features.
+The last row has an undefined value, and we also want to exclude diagnosis and patient IDs before we analyze all of this information. (For both ease and in the real world confidentiality). We'll only be using data from column 3 to the next to last column.
+
+Here we're going to look at the number of patients (rows) and features (columns/categories).
 
 ``` r
 #number of patients
@@ -93,7 +94,7 @@ ncol(wisc.df)
 
     ## [1] 33
 
-Cleaning up the data. Taking columns 3-32 (for reasons above).
+Once we know the total number of columns and rows, we can clean up the data. Taking columns 3-32 (for reasons above).
 
 ``` r
 wisc.data <- wisc.df[,3:32]
@@ -152,7 +153,7 @@ head(wisc.data)
 
 If we want to get rid of columns in the middle, we can make a vector: c(4, 10, 32)
 
-Now we want to set the row names to the patient IDs. That way we can track the patients without treating the IDs as values to be incorporated.
+Now we want to set the row names to the patient IDs. That way we can track the patients without treating the IDs as values to be incorporated. *note: use head() again to check your work*
 
 ``` r
 rownames(wisc.data) <- wisc.df$id
@@ -216,6 +217,8 @@ head(wisc.data)
     ## 84358402                 0.07678
     ## 843786                   0.12440
 
+Setting up an example of how to *quickly* characterize data.
+
 How many malignant v begnin tumors are there?
 
 ``` r
@@ -226,7 +229,7 @@ table(wisc.df$diagnosis)
     ##   B   M 
     ## 357 212
 
-We want to find out how many of the columns are mean values. Therefore we have to search for the columns containing "mean". (Remember we're using "wisc.data"")
+We want to find out how many of the columns are mean values. Therefore we have to search for the columns containing "mean". *note: remember we're using "wisc.data"* *note: we add the \_ before mean, so that we only get mean as a single work*
 
 ``` r
 #colnames(wisc.data)
@@ -235,7 +238,7 @@ length( grep("_mean",colnames(wisc.data)) )
 
     ## [1] 10
 
-We have how many there are, but to find out the names, we need to reference the values again.
+After calculating how many columns are mean values, we want to find out the names of those columns. *note: remember we need to reference the columns again*
 
 ``` r
 inds <- grep("_mean",colnames(wisc.data))
@@ -248,9 +251,9 @@ colnames(wisc.data)[inds]
     ##  [7] "concavity_mean"         "concave.points_mean"   
     ##  [9] "symmetry_mean"          "fractal_dimension_mean"
 
-**Principal Component Analysis**
+**Preparing the data for Principal Component Analysis** Before we start analysis, it's worth checking the column means and standard deviations to examine if we need to scale things.
 
-Checking the column means and standard deviations to examine if we need to scale things.
+**Mean values**
 
 ``` r
 # we can use this <- colMeans(wisc.data). But the following is better:
@@ -280,6 +283,8 @@ round( apply(wisc.data, 2, mean), 2)
 
 Note that apply(wisc.data, **2**) refers to columns. 1 would refer to rows.
 
+**Standard Deviations**
+
 ``` r
 round( apply(wisc.data, 2, sd), 2)
 ```
@@ -305,13 +310,15 @@ round( apply(wisc.data, 2, sd), 2)
     ##    concave.points_worst          symmetry_worst fractal_dimension_worst 
     ##                    0.07                    0.06                    0.02
 
-Now PCA time! We need scaling.
+After looking at the means and SD, we know we need to scale the data. Now PCA time!
 
 Principal Components Analysis (PCA)
 -----------------------------------
 
 ``` r
 wisc.pr <- prcomp(wisc.data, scale = TRUE)
+#remember we needed to scale!
+
 summary(wisc.pr)
 ```
 
@@ -341,9 +348,7 @@ summary(wisc.pr)
 biplot(wisc.pr)
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-13-1.png)
-
-This plot is awful. We are going to fix it.
+![](class09_files/figure-markdown_github/unnamed-chunk-12-1.png) This plot is awful. We are going to fix it.
 
 Here's how we make our own/make it nicer:
 
@@ -351,9 +356,9 @@ Here's how we make our own/make it nicer:
 plot( wisc.pr$x[,1], wisc.pr$x[,2])
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](class09_files/figure-markdown_github/unnamed-chunk-13-1.png)
 
-We have a graph- we want to add some details and expand on it (using the B vs M diagnosis). Ideally we'll want to color it by diagnosis. Because pretty is useful. (And pattern recognition is cool).
+We have a graph- we want to add some details and expand on it (using the B vs M diagnosis). Ideally we'll want to color it by diagnosis. Because color differences makes visualizing data much more simple. (And pattern recognition is cool).
 
 ``` r
 wisc.df$diagnosis
@@ -383,7 +388,7 @@ wisc.df$diagnosis
 plot( wisc.pr$x[,1], wisc.pr$x[,2], col= wisc.df$diagnosis)
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-16-1.png)
+![](class09_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
 Time for us to really dig in to the data.
 
@@ -399,7 +404,7 @@ pve <- round(variance/sum(variance) * 100, 2)
 plot(pve, type = "o")
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](class09_files/figure-markdown_github/unnamed-chunk-17-1.png)
 
 Or we can also make a bar plot. This one has a very strange axis. It is called "data driven".
 
@@ -410,12 +415,12 @@ barplot(pve, axes = FALSE, names.arg = paste("PC", 1:length(pve)), las = 2 )
 axis(2, round(pve))
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-19-1.png)
+![](class09_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
 Clustering in Principal Component Space
 ---------------------------------------
 
-We want to make a distance matrix and then use this to make a histogram (e.g. getting a distance matrix from the PCA results- wisc.pr$x).
+We want to make a distance matrix and then use it to make a histogram (e.g. getting a distance matrix from the PCA results- wisc.pr$x).
 
 ``` r
 d <- dist(wisc.pr$x[,1:2])
@@ -423,13 +428,13 @@ hc <- hclust(d, method = "ward.D2")
 plot(hc)
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-20-1.png)
+![](class09_files/figure-markdown_github/unnamed-chunk-19-1.png)
 
-How do we figure out cluster membership? cutree! Will clip the branches.
+How do we figure out cluster membership? Use **cutree()** to "clip the branches". This makes the data much more managable.
 
 ``` r
 grp3 <- cutree(hc, k = 3)
-#This returns a large vector- shows us which ID is in which clusters. So we make a table to show us how many individuals are in each group. 
+#This returns a large vector- shows us which ID is in which clusters. So we make a table to show how many individuals are in each group. 
 table(grp3)
 ```
 
@@ -443,12 +448,12 @@ Now we'll plot our PCA colored by the clusters we just made.
 plot(wisc.pr$x[,1], wisc.pr$x[,2], xlab = "PC1", ylab = "PC2", col = grp3)
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-22-1.png)
+![](class09_files/figure-markdown_github/unnamed-chunk-21-1.png)
 
-We have our three groups. It'll be interesting/more informative to show the contencts of each group. This is known as **Cross Tabulation**
+Now we have our three groups. It'll be interesting/more informative to show the contencts of each group. This is known as **cross tabulation**
 
 ``` r
-#table(grp3, ) .... first we need to make diagnosis vector. 
+#table(grp3, ) .... first we need to make a diagnosis vector. 
 #diagnosis 
 
 diagnosis <- wisc.df$diagnosis == "M"
@@ -498,6 +503,6 @@ plot(wisc.pr$x[,1:2], col = wisc.df$diagnosis)
 points(npc[,1], npc[,2], col=c("green","blue"), pch = 15, cex = 1.5)
 ```
 
-![](class09_files/figure-markdown_github/unnamed-chunk-25-1.png)
+![](class09_files/figure-markdown_github/unnamed-chunk-24-1.png)
 
-Now we have a framework for how to analyze this data. We can look at past trends, and then put new data into the existing trends. And this is just the start.
+Now we have a framework for how to analyze our large data set. We can look at past trends, and then fit new data into the existing trends.
